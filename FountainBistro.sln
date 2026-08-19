@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FountainBistro.Web", "FountainBistro.Web\FountainBistro.Web.csproj", "{9EEF7E98-9D41-40BC-8723-2D3F681DD038}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FountainBistro.Tests", "FountainBistro.Tests\FountainBistro.Tests.csproj", "{9F4C7F9F-0E87-4B4E-8FF1-A763081F629C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9EEF7E98-9D41-40BC-8723-2D3F681DD038}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9EEF7E98-9D41-40BC-8723-2D3F681DD038}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9EEF7E98-9D41-40BC-8723-2D3F681DD038}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9EEF7E98-9D41-40BC-8723-2D3F681DD038}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9F4C7F9F-0E87-4B4E-8FF1-A763081F629C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9F4C7F9F-0E87-4B4E-8FF1-A763081F629C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9F4C7F9F-0E87-4B4E-8FF1-A763081F629C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9F4C7F9F-0E87-4B4E-8FF1-A763081F629C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
