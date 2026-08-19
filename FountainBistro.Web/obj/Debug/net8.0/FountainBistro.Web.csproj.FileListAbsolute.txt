@@ -146,3 +146,5 @@
 /home/admin/repos/FountainBistro/FountainBistro.Web/obj/Debug/net8.0/FountainBistro.Web.pdb
 /home/admin/repos/FountainBistro/FountainBistro.Web/obj/Debug/net8.0/FountainBistro.Web.genruntimeconfig.cache
 /home/admin/repos/FountainBistro/FountainBistro.Web/obj/Debug/net8.0/ref/FountainBistro.Web.dll
+/home/admin/repos/FountainBistro/FountainBistro.Web/bin/Debug/net8.0/appsettings.Production.json
+/home/admin/repos/FountainBistro/FountainBistro.Web/obj/Debug/net8.0/FountainBistro.Web.sourcelink.json

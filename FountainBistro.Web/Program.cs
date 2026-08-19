@@ -5,20 +5,35 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
 using System.IO;
+using System.Linq;
 using FountainBistro.Web.Infrastructure.Data;
 using FountainBistro.Web.Infrastructure.Extensions;
 using FountainBistro.Web.Infrastructure.Data.SeedData;
 using FountainBistro.Web.Middleware;
 using FountainBistro.Web.Services.Implementations;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// 🔥 Порт из окружения
+// 🔥 Получаем порт из окружения
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
 var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 
 Console.WriteLine($"🚀 Запуск в окружении: {environment}");
 Console.WriteLine($"📡 Порт: {port}");
+Console.WriteLine($"📁 Текущая директория: {Directory.GetCurrentDirectory()}");
+
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    EnvironmentName = environment,
+    ContentRootPath = Directory.GetCurrentDirectory()
+});
+
+// 🔥 ОЧИЩАЕМ ВСЕ КОНФИГУРАЦИИ
+builder.Configuration.Sources.Clear();
+builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddJsonFile($"appsettings.{environment}.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddEnvironmentVariables();
+
+// 🔥 Принудительно устанавливаем URL
+builder.WebHost.UseUrls($"http://*:{port}");
 
 // Настройка логирования
 builder.Host.UseSerilog((context, config) =>
@@ -37,8 +52,8 @@ builder.Host.UseSerilog((context, config) =>
 // Добавляем сервисы
 builder.Services.AddControllersWithViews();
 
-// 🔥 Путь к БД - используем /app/Data
-var dbPath = Path.Combine("/app/Data", "FountainBistro.db");
+// 🔥 Путь к БД - используем текущую директорию
+var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "FountainBistro.db");
 Console.WriteLine($"🗄️ Путь к БД: {dbPath}");
 
 // Настройка SQLite
@@ -76,9 +91,7 @@ builder.Services.AddHostedService<OrderBackgroundService>();
 
 var app = builder.Build();
 
-// ❌ УБИРАЕМ UseHttpsRedirection
-// app.UseHttpsRedirection();
-
+// ❌ Убираем UseHttpsRedirection
 app.UseSerilogRequestLogging();
 app.UseStaticFiles();
 app.UseCookiePolicy();
@@ -86,7 +99,7 @@ app.UseMiddleware<AuthMiddleware>();
 
 app.UseRouting();
 
-// ✅ ТОЛЬКО ЭТА МАРШРУТИЗАЦИЯ
+// Маршруты
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
@@ -102,15 +115,16 @@ using (var scope = app.Services.CreateScope())
         dbContext.Database.EnsureCreated();
         Console.WriteLine("✅ База данных создана/проверена");
         
-        // Seed данных
         await DatabaseSeeder.SeedAsync(dbContext);
         Console.WriteLine("✅ Данные загружены");
     }
     catch (Exception ex)
     {
         Console.WriteLine($"❌ Ошибка при создании БД: {ex.Message}");
+        Console.WriteLine($"📁 Текущая директория: {Directory.GetCurrentDirectory()}");
+        Console.WriteLine($"📁 Файлы в директории: {string.Join(", ", Directory.GetFiles(Directory.GetCurrentDirectory()).Select(Path.GetFileName))}");
     }
 }
 
 Console.WriteLine($"✅ Приложение запущено на порту {port}");
-app.Run();
+await app.RunAsync();
