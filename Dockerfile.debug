@@ -1,25 +1,51 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-WORKDIR /app
-EXPOSE 8080
-
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
+
+# Копируем всё
 COPY . .
-RUN dotnet restore "FountainBistro.Web/FountainBistro.Web.csproj"
-RUN dotnet publish "FountainBistro.Web/FountainBistro.Web.csproj" -c Release -o /app/publish
 
-FROM base AS final
+# Сохраняем структуру в файл для анализа
+RUN find . -type f -name "*.csproj" > /tmp/csproj_files.txt && \
+    echo "=== CSProj files found ===" && cat /tmp/csproj_files.txt
+
+# Восстанавливаем с подробным выводом
+RUN dotnet restore "FountainBistro.Web/FountainBistro.Web.csproj" --verbosity detailed 2>&1 | tee /tmp/restore.log
+
+# Публикуем с подробным выводом
+RUN dotnet publish "FountainBistro.Web/FountainBistro.Web.csproj" -c Release -o /app/publish --verbosity detailed 2>&1 | tee /tmp/publish.log
+
+# Сохраняем содержимое publish в файл
+RUN ls -laR /app/publish > /tmp/publish_contents.txt
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
-COPY --from=build /app/publish .
 
+# Создаем папки
 RUN mkdir -p /app/Data /app/logs
 
-# Диагностика
-RUN echo "=== Содержимое /app ===" && ls -la /app/
-RUN echo "=== Проверка DLL ===" && test -f /app/FountainBistro.Web.dll && echo "✅ DLL найдена" || echo "❌ DLL НЕ найдена"
+# Копируем опубликованные файлы
+COPY --from=build /app/publish .
+
+# Копируем логи для анализа
+COPY --from=build /tmp/publish_contents.txt /tmp/
+COPY --from=build /tmp/restore.log /tmp/
+COPY --from=build /tmp/publish.log /tmp/
+
+# Сохраняем структуру финальной папки
+RUN ls -la /app/ > /tmp/final_contents.txt
 
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://+:8080
 
-# Запускаем с дополнительным выводом
-CMD ["sh", "-c", "echo '=== Запуск приложения ===' && ls -la /app/ && dotnet FountainBistro.Web.dll"]
+EXPOSE 8080
+
+# Запуск с полной диагностикой
+CMD ["sh", "-c", "echo '=== DIAGNOSTICS ===' && \
+    echo '1. Current directory:' && pwd && \
+    echo '2. Files in /app:' && ls -la /app/ && \
+    echo '3. Looking for dll:' && find /app -name '*.dll' && \
+    echo '4. Contents of publish:' && cat /tmp/publish_contents.txt && \
+    echo '5. Restore log (last 20 lines):' && tail -20 /tmp/restore.log && \
+    echo '6. Publish log (last 20 lines):' && tail -20 /tmp/publish.log && \
+    echo '=== STARTING APPLICATION ===' && \
+    dotnet /app/FountainBistro.Web.dll"]
