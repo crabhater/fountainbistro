@@ -1,0 +1,205 @@
+.status-container {
+    padding: 16px 0 40px 0;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.status-card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.status-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.status-header h2 {
+    font-size: 1.3rem;
+    margin-bottom: 4px;
+}
+
+.order-time {
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+
+.status-timeline {
+    position: relative;
+    padding-left: 40px;
+}
+
+.status-timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 30px;
+    bottom: 30px;
+    width: 2px;
+    background: var(--light-gray);
+}
+
+.status-step {
+    position: relative;
+    padding: 8px 0 24px 0;
+    opacity: 0.5;
+    transition: all 0.5s ease;
+}
+
+.status-step.completed {
+    opacity: 1;
+}
+
+.status-step.active {
+    opacity: 1;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-step.current .step-icon {
+    background: var(--primary);
+    color: white;
+    transform: scale(1.1);
+}
+
+.status-step.completed .step-icon {
+    background: var(--success);
+    color: white;
+}
+
+.status-step .step-icon {
+    position: absolute;
+    left: -40px;
+    top: 0;
+    width: 36px;
+    height: 36px;
+    background: var(--light-gray);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all 0.5s ease;
+}
+
+.status-step .step-check {
+    position: absolute;
+    right: 0;
+    top: 10px;
+    font-size: 0.8rem;
+    color: var(--success);
+    opacity: 0;
+    transition: all 0.5s ease;
+}
+
+.status-step.completed .step-check {
+    opacity: 1;
+}
+
+.status-step .step-content {
+    padding-right: 30px;
+}
+
+.status-step .step-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 2px;
+}
+
+.status-step .step-time {
+    font-size: 0.85rem;
+    color: var(--gray);
+}
+
+.order-details {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 2px solid var(--light-gray);
+}
+
+.order-details h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+    color: var(--primary);
+}
+
+.order-items {
+    margin-bottom: 16px;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 0.95rem;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.item-name {
+    flex: 1;
+}
+
+.item-quantity {
+    margin: 0 12px;
+    color: var(--gray);
+}
+
+.item-price {
+    font-weight: 600;
+}
+
+.order-total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 2px solid var(--primary);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.total-price {
+    color: var(--primary);
+}
+
+.status-actions {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.status-actions .btn {
+    padding: 12px;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 480px) {
+    .status-card {
+        padding: 16px;
+    }
+    
+    .status-timeline {
+        padding-left: 32px;
+    }
+    
+    .status-step .step-icon {
+        width: 30px;
+        height: 30px;
+        left: -34px;
+        font-size: 0.85rem;
+    }
+}

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
+    <title>@ViewData["Title"] - Fountain Bistro</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="manifest" href="~/manifest.json" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo" onclick="location.href='@Url.Action("Index", "Home")'">
+                    <h1>🍽️ Fountain Bistro</h1>
+                </div>
+                <div class="header-actions">
+                    @if (Context.Items.ContainsKey("IsAuthenticated") && (bool)Context.Items["IsAuthenticated"])
+                    {
+                        <form method="post" asp-controller="Auth" asp-action="Logout" style="display: inline;">
+                            <button type="submit" class="btn-logout">Выйти</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </header>
+
+        <main class="app-main">
+            @RenderBody()
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; @DateTime.Now.Year Fountain Bistro</p>
+        </footer>
+    </div>
+
+    <script src="~/js/app.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

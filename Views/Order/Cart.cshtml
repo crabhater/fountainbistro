@@ -1,0 +1,32 @@
+@{
+    ViewData["Title"] = "Корзина";
+}
+
+<link rel="stylesheet" href="~/css/cart.css" />
+
+<div class="cart-container">
+    <div class="cart-header">
+        <h2>🛒 Корзина</h2>
+        <button class="btn btn-danger btn-sm" onclick="clearCart()">Очистить</button>
+    </div>
+
+    <div id="cart-items">
+        <div class="empty-cart">
+            <div class="empty-icon">🛒</div>
+            <p>Корзина пуста</p>
+            <a asp-controller="Order" asp-action="Menu" class="btn btn-primary">В меню</a>
+        </div>
+    </div>
+
+    <div class="cart-footer" id="cart-footer" style="display: none;">
+        <div class="cart-total">
+            <span class="total-label">Итого:</span>
+            <span class="total-price" id="cart-total">0 ₽</span>
+        </div>
+        <button class="btn btn-success btn-block btn-lg" onclick="checkout()">
+            Оплатить
+        </button>
+    </div>
+</div>
+
+<script src="~/js/cart.js"></script>

@@ -1,0 +1,157 @@
+@{
+    ViewData["Title"] = "Вход";
+    var error = TempData["Error"] as string;
+}
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <span class="logo-emoji">🍽️</span>
+            <h1>Fountain Bistro</h1>
+        </div>
+        
+        <h2>Добро пожаловать!</h2>
+        <p class="auth-subtitle">Введите номер телефона для входа</p>
+        
+        @if (!string.IsNullOrEmpty(error))
+        {
+            <div class="alert alert-danger">@error</div>
+        }
+        
+        <form method="post" asp-controller="Auth" asp-action="Login" class="auth-form" id="loginForm">
+            <div class="form-group">
+                <label for="phone">Номер телефона</label>
+                <input type="tel" 
+                       id="phone" 
+                       name="phone" 
+                       class="form-control" 
+                       placeholder="+7 (999) 123-45-67"
+                       required 
+                       autofocus
+                       value="+7"
+                       maxlength="18" />
+                <small class="form-text">Введите номер в формате +7 (XXX) XXX-XX-XX</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginBtn">
+                <span class="btn-text">Войти</span>
+                <span class="btn-loader hidden">⏳</span>
+            </button>
+        </form>
+        
+        <div class="auth-info">
+            <div class="info-item">
+                <span class="info-icon">🔒</span>
+                <span>Безопасный вход</span>
+            </div>
+            <p class="info-text">Вход осуществляется по номеру телефона без пароля</p>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <style>
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .logo-emoji {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+        
+        .auth-logo h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .alert-danger {
+            background: #fee;
+            color: #c0392b;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .btn-loader {
+            display: inline-block;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        
+        .info-icon {
+            font-size: 1.1rem;
+        }
+        
+        .form-control {
+            font-size: 1.1rem;
+            padding: 14px 16px;
+        }
+        
+        .auth-card {
+            padding: 40px 24px;
+        }
+    </style>
+    
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            const btn = document.getElementById('loginBtn');
+            const text = btn.querySelector('.btn-text');
+            const loader = btn.querySelector('.btn-loader');
+            
+            text.classList.add('hidden');
+            loader.classList.remove('hidden');
+            btn.disabled = true;
+        });
+        
+        // Автоматическое форматирование номера телефона
+        const phoneInput = document.getElementById('phone');
+        phoneInput.addEventListener('input', function(e) {
+            let value = this.value.replace(/\D/g, '');
+            if (value.length === 0) {
+                this.value = '+7';
+                return;
+            }
+            if (value[0] !== '7') value = '7' + value;
+            
+            let formatted = '+7';
+            if (value.length > 1) {
+                formatted += ' (' + value.substring(1, 4);
+            }
+            if (value.length > 4) {
+                formatted += ') ' + value.substring(4, 7);
+            }
+            if (value.length > 7) {
+                formatted += '-' + value.substring(7, 9);
+            }
+            if (value.length > 9) {
+                formatted += '-' + value.substring(9, 11);
+            }
+            this.value = formatted;
+        });
+        
+        // Устанавливаем курсор в конец
+        phoneInput.addEventListener('focus', function() {
+            if (this.value === '+7') {
+                this.setSelectionRange(2, 2);
+            }
+        });
+    </script>
+}

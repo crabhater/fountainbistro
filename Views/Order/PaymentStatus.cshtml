@@ -1,0 +1,242 @@
+@using FountainBistro.Web.Models.Enums
+@model FountainBistro.Web.Models.Entities.Order
+
+@{
+    ViewData["Title"] = "Статус заказа";
+    var orderId = Model.Id.ToString().Substring(0, 8);
+}
+
+<link rel="stylesheet" href="~/css/order-status.css" />
+
+<div class="status-container">
+    <div class="status-card">
+        <div class="status-header">
+            <h2>📦 Заказ #@orderId</h2>
+            <p class="order-time">@Model.CreatedAt.ToString("HH:mm dd.MM.yyyy")</p>
+        </div>
+
+        <div class="status-timeline">
+            <div class="status-step" id="step-new">
+                <div class="step-icon">📋</div>
+                <div class="step-content">
+                    <div class="step-title">Заказ создан</div>
+                    <div class="step-time" id="time-new">Ожидание...</div>
+                </div>
+                <div class="step-check">✓</div>
+            </div>
+
+            <div class="status-step" id="step-paid">
+                <div class="step-icon">💳</div>
+                <div class="step-content">
+                    <div class="step-title">Оплачен</div>
+                    <div class="step-time" id="time-paid">Ожидание...</div>
+                </div>
+                <div class="step-check">✓</div>
+            </div>
+
+            <div class="status-step" id="step-cooking">
+                <div class="step-icon">👨‍🍳</div>
+                <div class="step-content">
+                    <div class="step-title">Готовится</div>
+                    <div class="step-time" id="time-cooking">Ожидание...</div>
+                </div>
+                <div class="step-check">✓</div>
+            </div>
+
+            <div class="status-step" id="step-ready">
+                <div class="step-icon">✅</div>
+                <div class="step-content">
+                    <div class="step-title">Готов к выдаче</div>
+                    <div class="step-time" id="time-ready">Ожидание...</div>
+                </div>
+                <div class="step-check">✓</div>
+            </div>
+
+            <div class="status-step" id="step-completed">
+                <div class="step-icon">🎉</div>
+                <div class="step-content">
+                    <div class="step-title">Заказ выполнен</div>
+                    <div class="step-time" id="time-completed">Ожидание...</div>
+                </div>
+                <div class="step-check">✓</div>
+            </div>
+        </div>
+
+        <div class="order-details">
+            <h3>Состав заказа</h3>
+            <div class="order-items">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="order-item">
+                        <span class="item-name">@item.Product?.Name ?? "Товар"</span>
+                        <span class="item-quantity">×@item.Quantity</span>
+                        <span class="item-price">@((item.UnitPrice * item.Quantity).ToString("F0")) ₽</span>
+                    </div>
+                }
+            </div>
+            <div class="order-total">
+                <span class="total-label">Итого:</span>
+                <span class="total-price">@Model.TotalAmount.ToString("F0") ₽</span>
+            </div>
+        </div>
+
+        <div class="status-actions">
+            <button class="btn btn-secondary btn-block" onclick="location.href='@Url.Action("Index", "Home")'">
+                На главную
+            </button>
+            <button class="btn btn-primary btn-block" onclick="location.href='@Url.Action("Menu", "Order")'">
+                Сделать новый заказ
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const orderId = '@Model.Id';
+    let statusCheckInterval;
+
+    // Карта статусов
+    const statusMap = {
+        'New': { step: 'new', label: 'Заказ создан' },
+        'Paid': { step: 'paid', label: 'Оплачен' },
+        'InProgress': { step: 'cooking', label: 'Готовится' },
+        'Ready': { step: 'ready', label: 'Готов к выдаче' },
+        'Completed': { step: 'completed', label: 'Заказ выполнен' }
+    };
+
+    const statusOrder = ['New', 'Paid', 'InProgress', 'Ready', 'Completed'];
+
+    // Проверка статуса
+    async function checkStatus() {
+        try {
+            const response = await fetch(`/Order/GetOrderStatus?orderId=${orderId}`);
+            if (!response.ok) throw new Error('Failed to get status');
+            
+            const data = await response.json();
+            updateStatus(data.status);
+            
+            // Если заказ завершен - останавливаем проверку
+            if (data.status === 'Completed' || data.status === 'Cancelled') {
+                clearInterval(statusCheckInterval);
+                // Показываем уведомление
+                if (data.status === 'Completed') {
+                    showNotification('🎉', 'Ваш заказ готов! Приятного аппетита!');
+                }
+            }
+        } catch (error) {
+            console.error('Error checking status:', error);
+        }
+    }
+
+    // Обновление UI статуса
+    function updateStatus(currentStatus) {
+        const currentIndex = statusOrder.indexOf(currentStatus);
+        
+        statusOrder.forEach((status, index) => {
+            const stepId = `step-${statusMap[status].step}`;
+            const step = document.getElementById(stepId);
+            
+            // Убираем все классы
+            step.classList.remove('active', 'completed', 'current');
+            
+            if (index < currentIndex) {
+                step.classList.add('completed');
+                // Добавляем время
+                const timeEl = step.querySelector('.step-time');
+                if (timeEl) {
+                    timeEl.textContent = '✅ Готово';
+                }
+            } else if (index === currentIndex) {
+                step.classList.add('active', 'current');
+                const timeEl = step.querySelector('.step-time');
+                if (timeEl) {
+                    timeEl.textContent = '⏳ В процессе...';
+                }
+            } else {
+                const timeEl = step.querySelector('.step-time');
+                if (timeEl) {
+                    timeEl.textContent = '⏳ Ожидание...';
+                }
+            }
+        });
+    }
+
+    // Показ уведомления
+    function showNotification(icon, message) {
+        // Проверяем поддержку уведомлений
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Fountain Bistro', {
+                body: message,
+                icon: '/favicon.ico'
+            });
+        }
+        
+        // Показываем в UI
+        const notification = document.createElement('div');
+        notification.className = 'notification-popup';
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-icon">${icon}</span>
+                <span class="notification-message">${message}</span>
+            </div>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 500);
+            }, 5000);
+        }, 100);
+    }
+
+    // Запрашиваем разрешение на уведомления
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+
+    // Запускаем проверку статуса
+    document.addEventListener('DOMContentLoaded', function() {
+        // Первая проверка сразу
+        checkStatus();
+        // Затем каждые 3 секунды
+        statusCheckInterval = setInterval(checkStatus, 3000);
+    });
+</script>
+
+<style>
+    .notification-popup {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-100px);
+        background: white;
+        border-radius: 12px;
+        padding: 16px 24px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        z-index: 1000;
+        transition: transform 0.5s ease;
+        max-width: 90%;
+        border-left: 4px solid var(--success);
+    }
+    
+    .notification-popup.show {
+        transform: translateX(-50%) translateY(0);
+    }
+    
+    .notification-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .notification-icon {
+        font-size: 1.5rem;
+    }
+    
+    .notification-message {
+        font-weight: 500;
+        font-size: 1rem;
+    }
+</style>

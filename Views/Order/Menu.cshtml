@@ -1,0 +1,30 @@
+@{
+    ViewData["Title"] = "Меню";
+}
+
+<link rel="stylesheet" href="~/css/menu.css" />
+
+<div class="menu-container">
+    <div class="menu-header">
+        <h2>📋 Наше меню</h2>
+        <div class="cart-summary" onclick="location.href='@Url.Action("Cart", "Order")'">
+            <span>🛒 <span id="cart-total-items">0</span></span>
+            <span id="cart-total-sum">0 ₽</span>
+        </div>
+    </div>
+
+    <div id="menu-content">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Загрузка меню...</p>
+        </div>
+    </div>
+
+    <div class="menu-footer">
+        <button id="checkout-btn" class="btn btn-primary btn-block btn-lg" disabled onclick="goToCheckout()">
+            Заказать
+        </button>
+    </div>
+</div>
+
+<script src="~/js/menu.js"></script>

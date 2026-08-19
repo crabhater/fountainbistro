@@ -1,0 +1,156 @@
+@{
+    ViewData["Title"] = "Главная";
+}
+
+<div class="home-container">
+    <div class="welcome-section">
+        <h2>🍽️ Добро пожаловать!</h2>
+        <p class="welcome-text">Выберите блюда и сделайте заказ</p>
+    </div>
+
+    <div class="action-cards">
+        <div class="action-card" onclick="location.href='@Url.Action("Menu", "Order")'">
+            <div class="card-icon">📋</div>
+            <h3>Сделать заказ</h3>
+            <p>Выберите блюда из меню</p>
+            <a asp-controller="Order" asp-action="Menu" class="btn btn-primary btn-block">В меню</a>
+        </div>
+
+        <div class="action-card" onclick="location.href='@Url.Action("Cart", "Order")'">
+            <div class="card-icon">🛒</div>
+            <h3>Корзина</h3>
+            <p id="cart-summary">Пока пуста</p>
+            <a asp-controller="Order" asp-action="Cart" class="btn btn-secondary btn-block">Перейти</a>
+        </div>
+    </div>
+
+    <div class="current-order-section">
+        <h3>📦 Текущий заказ</h3>
+        <div id="current-order-status" class="order-status">
+            <p class="empty-state">Нет активных заказов</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .action-card {
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .action-card:active {
+        transform: scale(0.97);
+    }
+    
+    .action-card .btn {
+        pointer-events: none;
+    }
+    
+    .order-item {
+        background: white;
+        border-radius: 8px;
+        padding: 12px 16px;
+        border-left: 4px solid var(--primary);
+        margin-bottom: 8px;
+    }
+    
+    .order-item .order-id {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    
+    .order-item .order-status-badge {
+        display: inline-block;
+        padding: 2px 12px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin: 4px 0;
+    }
+    
+    .order-status-badge.status-New { background: #e3f2fd; color: #1976d2; }
+    .order-status-badge.status-Paid { background: #e8f5e9; color: #2e7d32; }
+    .order-status-badge.status-InProgress { background: #fff3e0; color: #e65100; }
+    .order-status-badge.status-Ready { background: #f3e5f5; color: #7b1fa2; }
+    .order-status-badge.status-Completed { background: #e8f5e9; color: #1b5e20; }
+    .order-status-badge.status-Cancelled { background: #ffebee; color: #c62828; }
+    
+    .order-item .order-total {
+        font-weight: 700;
+        color: var(--primary);
+    }
+    
+    .order-item .order-date {
+        font-size: 0.85rem;
+        color: var(--gray);
+    }
+</style>
+
+<script>
+    // Загружаем состояние корзины
+    async function loadCartSummary() {
+        try {
+            const response = await fetch('/Order/CartSummary');
+            if (response.ok) {
+                const data = await response.json();
+                const summary = document.getElementById('cart-summary');
+                if (data.totalItems > 0) {
+                    summary.textContent = `${data.totalItems} товаров на ${data.totalSum.toFixed(0)} ₽`;
+                } else {
+                    summary.textContent = 'Пока пуста';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading cart:', error);
+        }
+    }
+    
+    // Загружаем текущий заказ
+    async function loadCurrentOrder() {
+        try {
+            const response = await fetch('/Order/CurrentOrder');
+            if (response.ok) {
+                const data = await response.json();
+                const container = document.getElementById('current-order-status');
+                if (data && data.id) {
+                    const statusMap = {
+                        'New': '🆕 Новый',
+                        'Paid': '💳 Оплачен',
+                        'InProgress': '👨‍🍳 Готовится',
+                        'Ready': '✅ Готов',
+                        'Completed': '📦 Выполнен',
+                        'Cancelled': '❌ Отменен'
+                    };
+                    container.innerHTML = `
+                        <div class="order-item">
+                            <div class="order-id">Заказ #${data.id.slice(0, 8)}</div>
+                            <div class="order-status-badge status-${data.status}">${statusMap[data.status] || data.status}</div>
+                            <div class="order-total">${data.totalAmount.toFixed(0)} ₽</div>
+                            <div class="order-date">${new Date(data.createdAt).toLocaleString()}</div>
+                            ${data.status !== 'Completed' && data.status !== 'Cancelled' ? 
+                                `<a href="/Order/PaymentStatus?orderId=${data.id}" class="btn btn-sm btn-primary" style="margin-top: 8px;">Отслеживать заказ</a>` : 
+                                ''}
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = '<p class="empty-state">Нет активных заказов</p>';
+                }
+            }
+        } catch (error) {
+            console.error('Error loading order:', error);
+        }
+    }
+    
+    // Загружаем данные при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCartSummary();
+        loadCurrentOrder();
+        
+        // Обновляем каждые 10 секунд
+        setInterval(loadCurrentOrder, 10000);
+    });
+</script>
