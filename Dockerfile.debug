@@ -1,0 +1,25 @@
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+COPY . .
+RUN dotnet restore "FountainBistro.Web/FountainBistro.Web.csproj"
+RUN dotnet publish "FountainBistro.Web/FountainBistro.Web.csproj" -c Release -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+
+RUN mkdir -p /app/Data /app/logs
+
+# Диагностика
+RUN echo "=== Содержимое /app ===" && ls -la /app/
+RUN echo "=== Проверка DLL ===" && test -f /app/FountainBistro.Web.dll && echo "✅ DLL найдена" || echo "❌ DLL НЕ найдена"
+
+ENV ASPNETCORE_ENVIRONMENT=Production
+ENV ASPNETCORE_URLS=http://+:8080
+
+# Запускаем с дополнительным выводом
+CMD ["sh", "-c", "echo '=== Запуск приложения ===' && ls -la /app/ && dotnet FountainBistro.Web.dll"]

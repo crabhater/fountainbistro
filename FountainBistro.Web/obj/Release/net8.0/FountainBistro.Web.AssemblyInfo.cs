@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FountainBistro.Web")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6c111fa9883c38fe3e79ac3bb5c28528d2f2eb0b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+efee575d0e6edf2a41a836bfaf84af6394a19979")]
 [assembly: System.Reflection.AssemblyProductAttribute("FountainBistro.Web")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FountainBistro.Web")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
