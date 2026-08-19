@@ -1,104 +1,116 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Serilog;
+using System;
+using System.IO;
 using FountainBistro.Web.Infrastructure.Data;
 using FountainBistro.Web.Infrastructure.Extensions;
 using FountainBistro.Web.Infrastructure.Data.SeedData;
 using FountainBistro.Web.Middleware;
 using FountainBistro.Web.Services.Implementations;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Настройка логирования
+// 🔥 Порт из окружения
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+
+Console.WriteLine($"🚀 Запуск в окружении: {environment}");
+Console.WriteLine($"📡 Порт: {port}");
+
+// Настройка логирования
 builder.Host.UseSerilog((context, config) =>
 {
     config.ReadFrom.Configuration(context.Configuration)
         .Enrich.FromLogContext()
         .WriteTo.Console()
         .WriteTo.File(
-            path: "logs/app-.txt",
+            path: "/app/logs/app-.txt",
             rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 30,
+            retainedFileCountLimit: 7,
             outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}"
         );
 });
 
-// 2. Добавление сервисов
+// Добавляем сервисы
 builder.Services.AddControllersWithViews();
 
-// 3. Настройка БД
-builder.Services.AddDbContext<AppDbContext>((serviceProvider, options) =>
-{
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseSqlite(connectionString);
-});
+// 🔥 Путь к БД - используем /app/Data
+var dbPath = Path.Combine("/app/Data", "FountainBistro.db");
+Console.WriteLine($"🗄️ Путь к БД: {dbPath}");
 
-// 4. Регистрация сервисов
+// Настройка SQLite
+var connectionString = $"Data Source={dbPath};Cache=Shared";
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite(connectionString));
+
+// Регистрация сервисов
 builder.Services.AddApplicationServices();
-
-// 5. Регистрация репозиториев
 builder.Services.AddApplicationRepositories();
-
-// 6. AutoMapper
-builder.Services.AddAutoMapper(typeof(Program));
-
-// 7. FluentValidation
 builder.Services.AddFluentValidationServices();
 
-// 8. Health Checks
+// AutoMapper
+builder.Services.AddAutoMapper(typeof(Program));
+
+// Health Checks
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>();
 
-// 9. Настройка Cookie
+// Cookie
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
     options.MinimumSameSitePolicy = SameSiteMode.Lax;
     options.Secure = CookieSecurePolicy.SameAsRequest;
 });
 
-// 10. Настройка кэширования
+// Кэш
 builder.Services.AddMemoryCache();
 
-// 11. HTTP клиенты
+// HTTP
 builder.Services.AddHttpClient();
 
-// 12. Фоновый сервис - только AddHostedService
+// Фоновый сервис
 builder.Services.AddHostedService<OrderBackgroundService>();
 
 var app = builder.Build();
 
-// 13. Middleware pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseDeveloperExceptionPage();
-}
-else
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
+// ❌ УБИРАЕМ UseHttpsRedirection
+// app.UseHttpsRedirection();
 
 app.UseSerilogRequestLogging();
-
 app.UseStaticFiles();
-app.UseRouting();
 app.UseCookiePolicy();
-
-// 14. Auth Middleware
 app.UseMiddleware<AuthMiddleware>();
 
-// 15. Маршруты
+app.UseRouting();
+
+// ✅ ТОЛЬКО ЭТА МАРШРУТИЗАЦИЯ
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.MapHealthChecks("/health");
 
-// 16. Инициализация БД и Seed данных
+// 🔥 Создаем БД при старте
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureCreated();
-    await DatabaseSeeder.SeedAsync(dbContext);
+    try
+    {
+        dbContext.Database.EnsureCreated();
+        Console.WriteLine("✅ База данных создана/проверена");
+        
+        // Seed данных
+        await DatabaseSeeder.SeedAsync(dbContext);
+        Console.WriteLine("✅ Данные загружены");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Ошибка при создании БД: {ex.Message}");
+    }
 }
 
+Console.WriteLine($"✅ Приложение запущено на порту {port}");
 app.Run();
