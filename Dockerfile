@@ -2,11 +2,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Копируем csproj файлы и восстанавливаем зависимости
+# Копируем solution и csproj файлы
+COPY FountainBistro.sln .
 COPY FountainBistro.Web/*.csproj FountainBistro.Web/
 COPY FountainBistro.Tests/*.csproj FountainBistro.Tests/
-COPY FountainBistro.sln .
 
+# Восстанавливаем зависимости
 RUN dotnet restore
 
 # Копируем весь код
@@ -29,14 +30,11 @@ RUN apt-get update && apt-get install -y \
     sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Создаем папку для логов
-RUN mkdir -p /app/logs
+# Создаем папки для логов и данных
+RUN mkdir -p /app/logs /app/Data && chmod 755 /app/logs /app/Data
 
 # Копируем опубликованное приложение
 COPY --from=build /app/publish .
-
-# Создаем папку для базы данных с правильными правами
-RUN mkdir -p /app/Data && chmod 755 /app/Data
 
 # Устанавливаем переменные окружения
 ENV ASPNETCORE_ENVIRONMENT=Production
@@ -45,5 +43,5 @@ ENV DOTNET_USE_POLLING_FILE_WATCHER=1
 # Открываем порт
 EXPOSE 8080
 
-# Точка входа
+# Точка входа - запускаем DLL
 ENTRYPOINT ["dotnet", "FountainBistro.Web.dll"]
