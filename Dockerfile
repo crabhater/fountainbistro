@@ -1,37 +1,32 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-WORKDIR /app
-EXPOSE 8080
-
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Копируем все файлы
+# Копируем всё
 COPY . .
 
 # Восстанавливаем зависимости
 RUN dotnet restore "FountainBistro.Web/FountainBistro.Web.csproj"
 
-# Публикуем проект
+# Собираем и публикуем в папку /app/publish
 RUN dotnet publish "FountainBistro.Web/FountainBistro.Web.csproj" -c Release -o /app/publish
 
-FROM base AS final
+# Финальный образ с ASP.NET Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-# Создаем папки
+# Создаем папки для данных и логов
 RUN mkdir -p /app/Data /app/logs
 
-# Копируем все из publish
+# Копируем опубликованные файлы
 COPY --from=build /app/publish .
 
-# Проверяем наличие файлов
-RUN echo "=== Файлы в /app ===" && ls -la /app/
-
 # Проверяем наличие dll
-RUN test -f /app/FountainBistro.Web.dll || (echo "❌ DLL не найдена!" && exit 1)
+RUN ls -la /app/ && test -f /app/FountainBistro.Web.dll && echo "✅ DLL found" || echo "❌ DLL NOT FOUND"
 
 # Переменные окружения
 ENV ASPNETCORE_ENVIRONMENT=Production
 ENV ASPNETCORE_URLS=http://+:8080
 
-# Запускаем приложение
-CMD ["dotnet", "FountainBistro.Web.dll"]
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "FountainBistro.Web.dll"]
